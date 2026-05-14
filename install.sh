@@ -26,7 +26,10 @@ if [ -f "$STATE" ]; then
 else
   PREV_IN=0; CUMULATIVE=0
 fi
-if [ "$TOKENS" -ne "$PREV_IN" ] 2>/dev/null && [ "$TOKENS" -gt 0 ] 2>/dev/null; then
+if [ "$TOKENS" -gt "$PREV_IN" ] 2>/dev/null; then
+  CUMULATIVE=$((CUMULATIVE + TOKENS - PREV_IN))
+  echo "$TOKENS $CUMULATIVE" > "$STATE"
+elif [ "$TOKENS" -lt "$PREV_IN" ] 2>/dev/null && [ "$TOKENS" -gt 0 ] 2>/dev/null; then
   CUMULATIVE=$((CUMULATIVE + TOKENS))
   echo "$TOKENS $CUMULATIVE" > "$STATE"
 elif [ ! -f "$STATE" ]; then
