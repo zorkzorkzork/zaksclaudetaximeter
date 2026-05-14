@@ -36,21 +36,31 @@ elif [ ! -f "$STATE" ]; then
   echo "$TOKENS $CUMULATIVE" > "$STATE"
 fi
 
-FARE_TOKENS="$CUMULATIVE"
-
-if [ "$FARE_TOKENS" -ge 1000000 ] 2>/dev/null; then
-  M_W=$((FARE_TOKENS / 1000000))
-  M_F=$(( (FARE_TOKENS % 1000000) / 100000 ))
+if [ "$TOKENS" -ge 1000000 ] 2>/dev/null; then
+  M_W=$((TOKENS / 1000000))
+  M_F=$(( (TOKENS % 1000000) / 100000 ))
   FARE_STR=$(printf "%3d.%d" "$M_W" "$M_F")
   UNIT="M"
-elif [ "$FARE_TOKENS" -gt 0 ] 2>/dev/null; then
-  K_W=$((FARE_TOKENS / 1000))
-  K_F=$(( (FARE_TOKENS % 1000) / 100 ))
+elif [ "$TOKENS" -gt 0 ] 2>/dev/null; then
+  K_W=$((TOKENS / 1000))
+  K_F=$(( (TOKENS % 1000) / 100 ))
   FARE_STR=$(printf "%3d.%d" "$K_W" "$K_F")
   UNIT="K"
 else
   FARE_STR="  0.0"
   UNIT="K"
+fi
+
+if [ "$CUMULATIVE" -ge 1000000 ] 2>/dev/null; then
+  TM_W=$((CUMULATIVE / 1000000))
+  TM_F=$(( (CUMULATIVE % 1000000) / 100000 ))
+  TRIP_STR=$(printf "%d.%d M" "$TM_W" "$TM_F")
+elif [ "$CUMULATIVE" -gt 0 ] 2>/dev/null; then
+  TK_W=$((CUMULATIVE / 1000))
+  TK_F=$(( (CUMULATIVE % 1000) / 100 ))
+  TRIP_STR=$(printf "%d.%d K" "$TK_W" "$TK_F")
+else
+  TRIP_STR="0.0 K"
 fi
 
 L0="" L1="" L2=""
@@ -104,6 +114,7 @@ printf "${D}FARE${X}\n"
 printf "${R}%s${X}\n" "$L0"
 printf "${R}%s${X}\n" "$L1"
 printf "${R}%s${X} ${G}%s${X}   ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF"
+printf "${D}TRIP${X}  ${G}%s${X}\n" "$TRIP_STR"
 METER
 
 chmod +x "$DEST"
