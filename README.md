@@ -1,12 +1,13 @@
 # Taxi Meter for Claude Code
 
-A seven-segment token display for your Claude Code status line. Shows session token usage, context window percentage, and effort level in a retro taxi meter style.
+A seven-segment token display for your Claude Code status line. Shows live context window usage, cumulative session fare, and effort level in a retro taxi meter style.
 
 ```
-FARE
+METER
      _   _
      _| |_  |_|
-    |_   _|.  |  K   ░░░░░░░░  12%  TARIFF 3 high
+    |_   _|.  |  K   CTX ██░░░░░░  25%  TARIFF 3 high
+FARE      145.0 K
 ```
 
 ## Requirements
@@ -16,8 +17,8 @@ FARE
 ## Install
 
 ```bash
-git clone https://github.com/genmomentum/taxi-meter.git
-cd taxi-meter
+git clone https://github.com/zorkzorkzork/zaksclaudetaximeter.git
+cd zaksclaudetaximeter
 cat install.sh   # read it first
 bash install.sh
 ```
@@ -26,10 +27,19 @@ Then restart Claude Code.
 
 ## What it shows
 
-- **FARE** -- session token usage in thousands (K), rendered as seven-segment digits
-- **Context bar** -- visual fill of context window (green/yellow/red)
+- **METER** -- live context window tokens as seven-segment digits (updates every 300ms)
+- **CTX bar** -- visual fill of context window (green < 60%, yellow < 80%, red > 80%)
 - **Percentage** -- exact context window usage
-- **Tariff** -- current effort level (low/medium/high)
+- **TARIFF** -- current effort level (1 low / 2 medium / 3 high)
+- **FARE** -- cumulative session token consumption (only goes up, survives compaction)
+
+Both METER and FARE automatically switch from K (thousands) to M (millions) when they cross 1M tokens.
+
+## How cumulative tracking works
+
+The METER shows what's currently in the context window. When the context fills up and Claude Code compacts (summarizes old messages), the METER drops back down.
+
+The FARE tracks cumulative tokens across the session. It accumulates the growth delta each time the context expands, and adds the full post-compaction context when compaction occurs. State is stored in `/tmp/taxi-meter-{session_id}` and resets when you start a new session.
 
 ## Uninstall
 
