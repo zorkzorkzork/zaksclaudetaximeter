@@ -113,11 +113,11 @@ esac
 
 R="\033[1;91m"; D="\033[31m"; G="\033[90m"; X="\033[0m"
 
-printf "${D}FARE${X}\n"
+printf "${D}METER${X}\n"
 printf "${R}%s${X}\n" "$L0"
 printf "${R}%s${X}\n" "$L1"
 printf "${R}%s${X} ${G}%s${X}   ${D}CTX${X} ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF"
-printf "${D}TRIP${X}  ${G}%9s %s${X}\n" "$TRIP_NUM" "$TRIP_UNIT"
+printf "${D}FARE${X}  ${G}%9s %s${X}\n" "$TRIP_NUM" "$TRIP_UNIT"
 METER
 
 chmod +x "$DEST"
