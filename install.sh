@@ -108,6 +108,8 @@ j=0; while [ "$j" -lt "$EMPTY" ]; do BAR+="░"; j=$((j+1)); done
 case "$EFFORT" in
   low)    TF="TARIFF 1 low" ;;
   high)   TF="TARIFF 3 high" ;;
+  xhigh)  TF="TARIFF 4 xhigh" ;;
+  max)    TF="TARIFF 5 max" ;;
   *)      TF="TARIFF 2 medium" ;;
 esac
 
@@ -119,7 +121,7 @@ trap 'printf "\033[0m"' EXIT
 printf "${D}FARE${X}\n"
 printf "${R}%s${X}\n" "$L0"
 printf "${R}%s${X}\n" "$L1"
-printf "${R}%s${X} ${G}%s${X}   ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF"
+printf "${R}%s${X} ${G}%s${X}   ${D}CTX${X} ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF"
 printf "${D}TRIP${X}  ${R}%s${X} ${G}%s${X}\n" "$FARE_PAD" "$TRIP_UNIT"
 METER
 
