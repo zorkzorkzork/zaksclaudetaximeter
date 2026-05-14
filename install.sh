@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+DEST="$HOME/.claude/taxi-meter.sh"
+SETTINGS="$HOME/.claude/settings.json"
+
+mkdir -p "$HOME/.claude"
+
+cat > "$DEST" << 'METER'
+#!/usr/bin/env bash
+INPUT=$(cat)
+
+eval "$(echo "$INPUT" | jq -r '
+  @sh "TOKENS=\(.context_window.total_input_tokens // 0)
+  PCT=\(.context_window.used_percentage // 0)
+  EFFORT=\(.effort.level // "medium")
+  SESSION=\(.session_name // "")"
+' 2>/dev/null)" || exit 0
+
+PCT_INT=${PCT%.*}
+: "${PCT_INT:=0}"
+
+if [ "$TOKENS" -gt 0 ] 2>/dev/null; then
+  K_W=$((TOKENS / 1000))
+  K_F=$(( (TOKENS % 1000) / 100 ))
+  FARE_STR=$(printf "%3d.%d" "$K_W" "$K_F")
+else
+  FARE_STR="  0.0"
+fi
+
+L0="" L1="" L2=""
+prev=""
+for (( i=0; i<${#FARE_STR}; i++ )); do
+  c="${FARE_STR:$i:1}"
+  if [ "$c" = "." ]; then
+    L0+=" "; L1+=" "; L2+="."
+    prev="."
+    continue
+  fi
+  if [ $i -gt 0 ] && [ "$prev" != "." ]; then
+    L0+=" "; L1+=" "; L2+=" "
+  fi
+  case "$c" in
+    0) L0+=" _ "; L1+="| |"; L2+="|_|" ;;
+    1) L0+="   "; L1+="  |"; L2+="  |" ;;
+    2) L0+=" _ "; L1+=" _|"; L2+="|_ " ;;
+    3) L0+=" _ "; L1+=" _|"; L2+=" _|" ;;
+    4) L0+="   "; L1+="|_|"; L2+="  |" ;;
+    5) L0+=" _ "; L1+="|_ "; L2+=" _|" ;;
+    6) L0+=" _ "; L1+="|_ "; L2+="|_|" ;;
+    7) L0+=" _ "; L1+="  |"; L2+="  |" ;;
+    8) L0+=" _ "; L1+="|_|"; L2+="|_|" ;;
+    9) L0+=" _ "; L1+="|_|"; L2+=" _|" ;;
+    ' ') L0+="   "; L1+="   "; L2+="   " ;;
+  esac
+  prev="$c"
+done
+
+BAR_W=8
+FILLED=$((PCT_INT * BAR_W / 100))
+[ "$FILLED" -gt "$BAR_W" ] && FILLED=$BAR_W
+EMPTY=$((BAR_W - FILLED))
+if [ "$PCT_INT" -gt 80 ]; then BC="\033[91m"
+elif [ "$PCT_INT" -gt 60 ]; then BC="\033[93m"
+else BC="\033[92m"; fi
+BAR=""
+j=0; while [ "$j" -lt "$FILLED" ]; do BAR+="█"; j=$((j+1)); done
+j=0; while [ "$j" -lt "$EMPTY" ]; do BAR+="░"; j=$((j+1)); done
+
+case "$EFFORT" in
+  low)    TF="TARIFF 1 low" ;;
+  high)   TF="TARIFF 3 high" ;;
+  *)      TF="TARIFF 2 medium" ;;
+esac
+
+R="\033[91m"; D="\033[31m"; G="\033[90m"; X="\033[0m"
+
+printf "${D}FARE${X}\n"
+printf "${R}%s${X}\n" "$L0"
+printf "${R}%s${X}\n" "$L1"
+printf "${R}%s${X} ${G}K${X}   ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$BAR" "$PCT_INT" "$TF"
+METER
+
+chmod +x "$DEST"
+
+if [ -f "$SETTINGS" ]; then
+  if jq -e '.statusLine' "$SETTINGS" > /dev/null 2>&1; then
+    echo "taxi-meter.sh installed to $DEST"
+    echo ""
+    echo "Your settings.json already has a statusLine entry."
+    echo "Make sure it points to: ~/.claude/taxi-meter.sh"
+  else
+    jq '. + {"statusLine":{"type":"command","command":"~/.claude/taxi-meter.sh","updateIntervalMs":300}}' "$SETTINGS" > "$SETTINGS.tmp" \
+      && mv "$SETTINGS.tmp" "$SETTINGS"
+    echo "taxi-meter.sh installed and settings.json updated."
+  fi
+else
+  cat > "$SETTINGS" << 'EOF'
+{
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/taxi-meter.sh",
+    "updateIntervalMs": 300
+  }
+}
+EOF
+  echo "taxi-meter.sh installed and settings.json created."
+fi
+
+echo ""
+echo "Restart Claude Code to see the taxi meter."
