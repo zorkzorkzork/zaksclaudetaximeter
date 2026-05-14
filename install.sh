@@ -80,7 +80,7 @@ case "$EFFORT" in
   *)      TF="TARIFF 2 medium" ;;
 esac
 
-R="\033[91m"; D="\033[31m"; G="\033[90m"; X="\033[0m"
+R="\033[1;91m"; D="\033[31m"; G="\033[90m"; X="\033[0m"
 
 printf "${D}FARE${X}\n"
 printf "${R}%s${X}\n" "$L0"
