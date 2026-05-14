@@ -54,13 +54,16 @@ fi
 if [ "$CUMULATIVE" -ge 1000000 ] 2>/dev/null; then
   TM_W=$((CUMULATIVE / 1000000))
   TM_F=$(( (CUMULATIVE % 1000000) / 100000 ))
-  TRIP_STR=$(printf "%d.%d M" "$TM_W" "$TM_F")
+  TRIP_NUM=$(printf "%d.%d" "$TM_W" "$TM_F")
+  TRIP_UNIT="M"
 elif [ "$CUMULATIVE" -gt 0 ] 2>/dev/null; then
   TK_W=$((CUMULATIVE / 1000))
   TK_F=$(( (CUMULATIVE % 1000) / 100 ))
-  TRIP_STR=$(printf "%d.%d K" "$TK_W" "$TK_F")
+  TRIP_NUM=$(printf "%d.%d" "$TK_W" "$TK_F")
+  TRIP_UNIT="K"
 else
-  TRIP_STR="0.0 K"
+  TRIP_NUM="0.0"
+  TRIP_UNIT="K"
 fi
 
 L0="" L1="" L2=""
@@ -113,8 +116,8 @@ R="\033[1;91m"; D="\033[31m"; G="\033[90m"; X="\033[0m"
 printf "${D}FARE${X}\n"
 printf "${R}%s${X}\n" "$L0"
 printf "${R}%s${X}\n" "$L1"
-printf "${R}%s${X} ${G}%s${X}   ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF"
-printf "${D}TRIP${X}  ${G}%s${X}\n" "$TRIP_STR"
+printf "${R}%s${X} ${G}%s${X}   ${D}CTX${X} ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF"
+printf "${D}TRIP${X}  ${G}%9s %s${X}\n" "$TRIP_NUM" "$TRIP_UNIT"
 METER
 
 chmod +x "$DEST"
