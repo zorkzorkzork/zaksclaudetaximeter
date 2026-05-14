@@ -14,20 +14,35 @@ eval "$(echo "$INPUT" | jq -r '
   @sh "TOKENS=\(.context_window.total_input_tokens // 0)
   PCT=\(.context_window.used_percentage // 0)
   EFFORT=\(.effort.level // "medium")
-  SESSION=\(.session_name // "")"
+  SID=\(.session_id // "default")"
 ' 2>/dev/null)" || exit 0
 
 PCT_INT=${PCT%.*}
 : "${PCT_INT:=0}"
 
-if [ "$TOKENS" -ge 1000000 ] 2>/dev/null; then
-  M_W=$((TOKENS / 1000000))
-  M_F=$(( (TOKENS % 1000000) / 100000 ))
+STATE="/tmp/taxi-meter-${SID}"
+if [ -f "$STATE" ]; then
+  read PREV_IN CUMULATIVE < "$STATE"
+else
+  PREV_IN=0; CUMULATIVE=0
+fi
+if [ "$TOKENS" -ne "$PREV_IN" ] 2>/dev/null && [ "$TOKENS" -gt 0 ] 2>/dev/null; then
+  CUMULATIVE=$((CUMULATIVE + TOKENS))
+  echo "$TOKENS $CUMULATIVE" > "$STATE"
+elif [ ! -f "$STATE" ]; then
+  echo "$TOKENS $CUMULATIVE" > "$STATE"
+fi
+
+FARE_TOKENS="$CUMULATIVE"
+
+if [ "$FARE_TOKENS" -ge 1000000 ] 2>/dev/null; then
+  M_W=$((FARE_TOKENS / 1000000))
+  M_F=$(( (FARE_TOKENS % 1000000) / 100000 ))
   FARE_STR=$(printf "%3d.%d" "$M_W" "$M_F")
   UNIT="M"
-elif [ "$TOKENS" -gt 0 ] 2>/dev/null; then
-  K_W=$((TOKENS / 1000))
-  K_F=$(( (TOKENS % 1000) / 100 ))
+elif [ "$FARE_TOKENS" -gt 0 ] 2>/dev/null; then
+  K_W=$((FARE_TOKENS / 1000))
+  K_F=$(( (FARE_TOKENS % 1000) / 100 ))
   FARE_STR=$(printf "%3d.%d" "$K_W" "$K_F")
   UNIT="K"
 else
