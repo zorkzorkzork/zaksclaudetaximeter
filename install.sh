@@ -20,12 +20,19 @@ eval "$(echo "$INPUT" | jq -r '
 PCT_INT=${PCT%.*}
 : "${PCT_INT:=0}"
 
-if [ "$TOKENS" -gt 0 ] 2>/dev/null; then
+if [ "$TOKENS" -ge 1000000 ] 2>/dev/null; then
+  M_W=$((TOKENS / 1000000))
+  M_F=$(( (TOKENS % 1000000) / 100000 ))
+  FARE_STR=$(printf "%3d.%d" "$M_W" "$M_F")
+  UNIT="M"
+elif [ "$TOKENS" -gt 0 ] 2>/dev/null; then
   K_W=$((TOKENS / 1000))
   K_F=$(( (TOKENS % 1000) / 100 ))
   FARE_STR=$(printf "%3d.%d" "$K_W" "$K_F")
+  UNIT="K"
 else
   FARE_STR="  0.0"
+  UNIT="K"
 fi
 
 L0="" L1="" L2=""
@@ -78,7 +85,7 @@ R="\033[91m"; D="\033[31m"; G="\033[90m"; X="\033[0m"
 printf "${D}FARE${X}\n"
 printf "${R}%s${X}\n" "$L0"
 printf "${R}%s${X}\n" "$L1"
-printf "${R}%s${X} ${G}K${X}   ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$BAR" "$PCT_INT" "$TF"
+printf "${R}%s${X} ${G}%s${X}   ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF"
 METER
 
 chmod +x "$DEST"
