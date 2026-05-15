@@ -141,7 +141,7 @@ j=0; while [ "$j" -lt "$RL_FILLED" ]; do RL_BAR+="█"; j=$((j+1)); done
 j=0; while [ "$j" -lt "$RL_EMPTY" ]; do RL_BAR+="░"; j=$((j+1)); done
 
 if [ "$RL5_RESET" -gt 0 ] 2>/dev/null; then
-  RESET_TIME=$(TZ=Europe/London date -r "$RL5_RESET" +"%H:%M" 2>/dev/null || echo "??:??")
+  RESET_TIME=$(date -r "$RL5_RESET" +"%H:%M" 2>/dev/null || echo "??:??")
 else
   RESET_TIME="??:??"
 fi
@@ -156,7 +156,7 @@ printf "${R}%s${X}\n" "$L0"
 printf "${R}%s${X}\n" "$L1"
 MDL_STR=""
 [ -n "$MDL" ] && MDL_STR="  ${D}${MDL}${X}"
-RATE_STR="  ${D}RATE${X} ${RC}${RL_BAR}${X} ${G}${RL5_INT}%%${X} ${G}resets ${RESET_TIME}${X}"
+RATE_STR="  ${D}RATE${X} ${RC}${RL_BAR}${X} ${G}${RL5_INT}%${X} ${G}resets ${RESET_TIME}${X}"
 printf "${R}%s${X} ${G}%s${X}   ${D}CTX${X} ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}%b%b\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF" "$MDL_STR" "$RATE_STR"
 printf "${D}TRIP${X}  ${R}%s${X} ${G}%s${X}\n" "$FARE_PAD" "$TRIP_UNIT"
 METER
