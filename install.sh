@@ -15,6 +15,8 @@ eval "$(echo "$INPUT" | jq -r '
   PCT=\(.context_window.used_percentage // 0)
   EFFORT=\(.effort.level // "medium")
   MODEL=\(.model.id // "unknown")
+  RL5=\(.rate_limits.five_hour.used_percentage // 0)
+  RL5_RESET=\(.rate_limits.five_hour.resets_at // 0)
   SID=\(.session_id // "default")"
 ' 2>/dev/null)" || exit 0
 
@@ -124,6 +126,26 @@ case "$MODEL" in
   *)                          MDL="$MODEL" ;;
 esac
 
+RL5_INT=${RL5%.*}
+: "${RL5_INT:=0}"
+
+RL_BAR_W=8
+RL_FILLED=$((RL5_INT * RL_BAR_W / 100))
+[ "$RL_FILLED" -gt "$RL_BAR_W" ] && RL_FILLED=$RL_BAR_W
+RL_EMPTY=$((RL_BAR_W - RL_FILLED))
+if [ "$RL5_INT" -gt 80 ]; then RC="\033[91m"
+elif [ "$RL5_INT" -gt 60 ]; then RC="\033[93m"
+else RC="\033[92m"; fi
+RL_BAR=""
+j=0; while [ "$j" -lt "$RL_FILLED" ]; do RL_BAR+="█"; j=$((j+1)); done
+j=0; while [ "$j" -lt "$RL_EMPTY" ]; do RL_BAR+="░"; j=$((j+1)); done
+
+if [ "$RL5_RESET" -gt 0 ] 2>/dev/null; then
+  RESET_TIME=$(TZ=Europe/London date -r "$RL5_RESET" +"%H:%M" 2>/dev/null || echo "??:??")
+else
+  RESET_TIME="??:??"
+fi
+
 FARE_PAD=$(printf '%9s' "$TRIP_NUM")
 
 R="\033[91m"; D="\033[31m"; G="\033[90m"; X="\033[0m"
@@ -134,7 +156,8 @@ printf "${R}%s${X}\n" "$L0"
 printf "${R}%s${X}\n" "$L1"
 MDL_STR=""
 [ -n "$MDL" ] && MDL_STR="  ${D}${MDL}${X}"
-printf "${R}%s${X} ${G}%s${X}   ${D}CTX${X} ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}%b\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF" "$MDL_STR"
+RATE_STR="  ${D}RATE${X} ${RC}${RL_BAR}${X} ${G}${RL5_INT}%%${X} ${G}resets ${RESET_TIME}${X}"
+printf "${R}%s${X} ${G}%s${X}   ${D}CTX${X} ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}%b%b\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF" "$MDL_STR" "$RATE_STR"
 printf "${D}TRIP${X}  ${R}%s${X} ${G}%s${X}\n" "$FARE_PAD" "$TRIP_UNIT"
 METER
 
