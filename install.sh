@@ -14,6 +14,7 @@ eval "$(echo "$INPUT" | jq -r '
   @sh "TOKENS=\(.context_window.total_input_tokens // 0)
   PCT=\(.context_window.used_percentage // 0)
   EFFORT=\(.effort.level // "medium")
+  MODEL=\(.model.id // "unknown")
   SID=\(.session_id // "default")"
 ' 2>/dev/null)" || exit 0
 
@@ -113,6 +114,16 @@ case "$EFFORT" in
   *)      TF="TARIFF 2 medium" ;;
 esac
 
+case "$MODEL" in
+  *opus-4-7*|*opus-4.7*)     MDL="opus 4.7" ;;
+  *opus-4-6*|*opus-4.6*)     MDL="opus 4.6" ;;
+  *sonnet-4-6*|*sonnet-4.6*) MDL="sonnet 4.6" ;;
+  *sonnet-4-5*|*sonnet-4.5*) MDL="sonnet 4.5" ;;
+  *haiku*)                    MDL="haiku 4.5" ;;
+  unknown)                    MDL="" ;;
+  *)                          MDL="$MODEL" ;;
+esac
+
 FARE_PAD=$(printf '%9s' "$TRIP_NUM")
 
 R="\033[91m"; D="\033[31m"; G="\033[90m"; X="\033[0m"
@@ -121,7 +132,9 @@ trap 'printf "\033[0m"' EXIT
 printf "${D}FARE${X}\n"
 printf "${R}%s${X}\n" "$L0"
 printf "${R}%s${X}\n" "$L1"
-printf "${R}%s${X} ${G}%s${X}   ${D}CTX${X} ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF"
+MDL_STR=""
+[ -n "$MDL" ] && MDL_STR="  ${D}${MDL}${X}"
+printf "${R}%s${X} ${G}%s${X}   ${D}CTX${X} ${BC}%s${X} ${G}%s%%${X}  ${D}%s${X}%b\n" "$L2" "$UNIT" "$BAR" "$PCT_INT" "$TF" "$MDL_STR"
 printf "${D}TRIP${X}  ${R}%s${X} ${G}%s${X}\n" "$FARE_PAD" "$TRIP_UNIT"
 METER
 
